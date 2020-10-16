@@ -22,7 +22,7 @@ function registerUser(req, res) {
         // Now we construct and send the response to the user with their auth tokens in the header and the user object in the body
         res
             .header('x-refresh-token', authTokens.refreshToken)
-            .header('x-access-token', authTokens.accessToken)
+            .header('X-Access-Token', authTokens.accessToken)
             .send(newUser);
     }).catch((e) => {
         res.status(400).send(e);
@@ -46,7 +46,7 @@ function loginUser(req, res) {
             // Now we construct and send the response to the user with their auth tokens in the header and the user object in the body
             res
                 .header('x-refresh-token', authTokens.refreshToken)
-                .header('x-access-token', authTokens.accessToken)
+                .header('X-Access-Token', authTokens.accessToken)
                 .send(user);
         })
     }).catch((e) => {

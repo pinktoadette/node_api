@@ -21,11 +21,11 @@ app.use(bodyParser.json());
 app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Methods", "GET, POST, HEAD, OPTIONS, PUT, PATCH, DELETE");
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, x-access-token, x-refresh-token, _id");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, X-Access-Token, x-refresh-token, _id");
 
     res.header(
         'Access-Control-Expose-Headers',
-        'x-access-token, x-refresh-token'
+        'X-Access-Token, x-refresh-token'
     );
 
     next();
@@ -34,7 +34,7 @@ app.use(function (req, res, next) {
 
 // check whether the request has a valid JWT access token
 let authenticate = (req, res, next) => {
-    let token = req.header('x-access-token');
+    let token = req.header('X-Access-Token');
 
     // verify the JWT
     jwt.verify(token, User.getJWTSecret(), (err, decoded) => {
@@ -290,7 +290,7 @@ app.patch('/lists/:listId/tasks/:taskId', authenticate, (req, res) => {
 //         // Now we construct and send the response to the user with their auth tokens in the header and the user object in the body
 //         res
 //             .header('x-refresh-token', authTokens.refreshToken)
-//             .header('x-access-token', authTokens.accessToken)
+//             .header('X-Access-Token', authTokens.accessToken)
 //             .send(newUser);
 //     }).catch((e) => {
 //         res.status(400).send(e);
@@ -319,7 +319,7 @@ app.patch('/lists/:listId/tasks/:taskId', authenticate, (req, res) => {
 //             // Now we construct and send the response to the user with their auth tokens in the header and the user object in the body
 //             res
 //                 .header('x-refresh-token', authTokens.refreshToken)
-//                 .header('x-access-token', authTokens.accessToken)
+//                 .header('X-Access-Token', authTokens.accessToken)
 //                 .send(user);
 //         })
 //     }).catch((e) => {
@@ -335,7 +335,7 @@ app.patch('/lists/:listId/tasks/:taskId', authenticate, (req, res) => {
 // app.get('/users/me/access-token', verifySession, (req, res) => {
 //     // we know that the user/caller is authenticated and we have the user_id and user object available to us
 //     req.userObject.generateAccessAuthToken().then((accessToken) => {
-//         res.header('x-access-token', accessToken).send({ accessToken });
+//         res.header('X-Access-Token', accessToken).send({ accessToken });
 //     }).catch((e) => {
 //         res.status(400).send(e);
 //     });
