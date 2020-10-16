@@ -2,7 +2,7 @@ const register = require('./module');
 
 module.exports = app => {
      
-    app.post('/register', register.user);
-    app.get('/register/phone', register.phone);
+    app.post('/register', register.signup);
+    app.post('/login', register.login);
     
 }

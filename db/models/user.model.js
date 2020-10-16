@@ -143,12 +143,12 @@ UserSchema.statics.hasRefreshTokenExpired = (expiresAt) => {
 /* MIDDLEWARE */
 // Before a user document is saved, this code runs
 UserSchema.pre('save', function (next) {
+    
     let user = this;
     let costFactor = 10;
 
     if (user.isModified('password')) {
         // if the password field has been edited/changed then run this code.
-
         // Generate salt and hash password
         bcrypt.genSalt(costFactor, (err, salt) => {
             bcrypt.hash(user.password, salt, (err, hash) => {

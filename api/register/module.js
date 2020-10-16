@@ -6,7 +6,6 @@ const { twilioAccountSid, twilioAuthToken} = require('./../../config/constants')
 function registerUser(req, res) {
     // User sign up
     let body = req.body;
-    console.log(body)
     let newUser = new User(body);
 
     newUser.save().then(() => {
@@ -30,6 +29,31 @@ function registerUser(req, res) {
     })
 }
 
+function loginUser(req, res) {
+    let email = req.body.email;
+    let password = req.body.password;
+
+    User.findByCredentials(email, password).then((user) => {
+        return user.createSession().then((refreshToken) => {
+            // Session created successfully - refreshToken returned.
+            // now we geneate an access auth token for the user
+
+            return user.generateAccessAuthToken().then((accessToken) => {
+                // access auth token generated successfully, now we return an object containing the auth tokens
+                return { accessToken, refreshToken }
+            });
+        }).then((authTokens) => {
+            // Now we construct and send the response to the user with their auth tokens in the header and the user object in the body
+            res
+                .header('x-refresh-token', authTokens.refreshToken)
+                .header('x-access-token', authTokens.accessToken)
+                .send(user);
+        })
+    }).catch((e) => {
+        res.status(400).send(e);
+    });
+}
+
 
 function registerPhone(req, res) {
     var client = new twilio(twilioAccountSid, twilioAuthToken);
@@ -49,6 +73,6 @@ function registerPhone(req, res) {
 }
 
 module.exports = {
-    user: registerUser,
-    phone: registerPhone
+    signup: registerUser,
+    login: loginUser
 }
