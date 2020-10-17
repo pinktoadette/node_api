@@ -69,10 +69,25 @@ function registerPhone(req, res) {
     }).catch((error) => {
         res.send({ success: 0, message: error});
     });
-
 }
+
+function logoutUser(req, res) {
+    if (req.session) {
+    // delete session object
+    req.session.destroy(function(err) {
+        if(err) {
+        return next(err);
+        } else {
+        return res.redirect('/');
+        }
+    });
+    }
+}
+
 
 module.exports = {
     signup: registerUser,
-    login: loginUser
+    login: loginUser,
+    logout: logoutUser,
+    confirmPhone: registerPhone
 }

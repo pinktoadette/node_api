@@ -87,8 +87,6 @@ UserSchema.methods.createSession = function () {
     })
 }
 
-
-
 /* MODEL METHODS (static methods) */
 
 UserSchema.statics.getJWTSecret = () => {
