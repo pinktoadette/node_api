@@ -16,7 +16,8 @@ const ACCESS_CONTROLS_HEADERS = [
     'Content-Type',
     'Access-Control-Allow-Origin',
     'Access-Control-Allow-Methods',
-    'X-Requested-With'
+    'X-Requested-With',
+    'X-Access-Token'
 ]
 const ACCESS_CONTROLS = ['GET', 'PUT', 'POST', 'DELETE', 'HEAD'];
 const corsOptions = {
