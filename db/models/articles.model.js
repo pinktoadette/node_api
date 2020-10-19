@@ -10,11 +10,11 @@ const ArticleSchema = new mongoose.Schema({
     },
     pkey: { type: String, unique: true },
     real: {
-        type: Boolean,
+        type: String,
         required: true
     },
     hashtags: [{
-        type: Hashtags
+        type: String
     }],
     submittedDate: {
         type: Date,

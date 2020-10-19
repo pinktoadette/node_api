@@ -4,7 +4,7 @@ const { Articles } = require('./articles.model');
 // user's poll to the submitted article
 const UserPollSchema = new mongoose.Schema({
     article: {
-        type: Articles,
+        type: mongoose.Types.ObjectId,
         required: true,
         minlength: 1,
         trim: true
