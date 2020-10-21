@@ -32,7 +32,6 @@ function registerUser(req, res) {
 function loginUser(req, res) {
     let email = req.body.email;
     let password = req.body.password;
-
     User.findByCredentials(email, password).then((user) => {
         return user.createSession().then((refreshToken) => {
             // Session created successfully - refreshToken returned.
@@ -84,10 +83,19 @@ function logoutUser(req, res) {
     }
 }
 
+function userAccessToken(req, res) {
+    // we know that the user/caller is authenticated and we have the user_id and user object available to us
+    req.userObject.generateAccessAuthToken().then((accessToken) => {
+        res.header('X-Access-Token', accessToken).send({ accessToken });
+    }).catch((e) => {
+        res.status(400).send(e);
+    });
+}
 
 module.exports = {
     signup: registerUser,
     login: loginUser,
     logout: logoutUser,
-    confirmPhone: registerPhone
+    confirmPhone: registerPhone,
+    access: userAccessToken
 }

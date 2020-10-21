@@ -3,9 +3,9 @@ const { Task } = require('./task.model');
 const { User } = require('./user.model');
 const { Hashtags } = require('./hashtags.model');
 const { Articles } = require('./articles.model');
-const { UserPoll } = require('./userPoll.model');
-const { UserPollComments } = require('./userPollComments.model');
-
+const { Poll } = require('./poll.model');
+const { Comments } = require('./comments.model');
+const { LikeVotes } = require('./likeVotes.model');
 
 module.exports = {
     List,
@@ -13,6 +13,7 @@ module.exports = {
     User,
     Hashtags,
     Articles,
-    UserPoll,
-    UserPollComments
+    Poll,
+    Comments,
+    LikeVotes
 }

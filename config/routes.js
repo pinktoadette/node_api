@@ -19,7 +19,7 @@ const ACCESS_CONTROLS_HEADERS = [
     'X-Requested-With',
     'X-Access-Token'
 ]
-const ACCESS_CONTROLS = ['GET', 'PUT', 'POST', 'DELETE', 'HEAD'];
+const ACCESS_CONTROLS = ['GET', 'PUT', 'PATCH', 'POST', 'DELETE', 'HEAD'];
 const corsOptions = {
     origin: function(origin, callback) {
         if (allowedOrigins.includes(origin) || !origin) return callback(null, true);

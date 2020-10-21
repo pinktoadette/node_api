@@ -1,15 +1,13 @@
 const mongoose = require('mongoose');
-const { Articles } = require('./articles.model');
 
 // user's poll to the submitted article
-const UserPollCommentsSchema = new mongoose.Schema({
-    article: {
+const PollSchema = new mongoose.Schema({
+    articleId: {
         type: mongoose.Types.ObjectId,
         required: true,
-        minlength: 1,
         trim: true
     },
-    comment: {
+    real: {
         type: String,
         required: true
     },
@@ -17,12 +15,12 @@ const UserPollCommentsSchema = new mongoose.Schema({
         type: Date,
         required: true
     },
-    _userId: {
+    _submitUserId: {
         type: mongoose.Types.ObjectId,
         required: true
     }
 })
 
-const UserPollComments = mongoose.model('UserPollComments', UserPollCommentsSchema);
+const Poll = mongoose.model('Poll', PollSchema);
 
-module.exports = { UserPollComments }
+module.exports = { Poll }

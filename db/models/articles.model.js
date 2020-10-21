@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const { Hashtags } = require('./hashtags.model');
 
 const ArticleSchema = new mongoose.Schema({
     url: {
@@ -8,7 +7,6 @@ const ArticleSchema = new mongoose.Schema({
         minlength: 1,
         trim: true
     },
-    pkey: { type: String, unique: true },
     real: {
         type: String,
         required: true

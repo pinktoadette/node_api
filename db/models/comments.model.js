@@ -2,28 +2,30 @@ const mongoose = require('mongoose');
 const { Articles } = require('./articles.model');
 
 // user's poll to the submitted article
-const UserPollSchema = new mongoose.Schema({
-    article: {
+const CommentsSchema = new mongoose.Schema({
+    articleId: {
         type: mongoose.Types.ObjectId,
         required: true,
         minlength: 1,
         trim: true
     },
-    pkey: { type: String, unique: true },
-    real: {
-        type: Boolean,
+    reply: {
+        type: String,
         required: true
     },
     submittedDate: {
         type: Date,
         required: true
     },
-    _votedUserId: {
+    respondCommentId: {
+        type: mongoose.Types.ObjectId
+    },
+    _userId: {
         type: mongoose.Types.ObjectId,
         required: true
     }
 })
 
-const UserPoll = mongoose.model('UserPoll', UserPollSchema);
+const Comments = mongoose.model('Comments', CommentsSchema);
 
-module.exports = { UserPoll }
+module.exports = { Comments }
