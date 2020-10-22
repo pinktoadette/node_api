@@ -10,7 +10,9 @@ const allowedOrigins = [
 'https://localhost:4200',
 'localhost:27017',
 'https://buzznews.herokuapp.com',
-'http://buzznews.herokuapp.com'
+'http://buzznews.herokuapp.com',
+'https://buzzlerapi.herokuapp.com',
+'http://buzzlerapi.herokuapp.com'
 ];
 
 const ACCESS_CONTROLS_HEADERS = [
