@@ -1,5 +1,5 @@
-const sql_connection = {
-    url: "mongodb://localhost:27017/dbPolls"
+const NODE_ENV = {
+    dbUrl: "mongodb://localhost:27017/dbPolls"
 }; 
 
-module.exports = sql_connection;
+module.exports = NODE_ENV;

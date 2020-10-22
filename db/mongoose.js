@@ -1,9 +1,10 @@
 // This file will handle connection logic to the MongoDB database
 
 const mongoose = require('mongoose');
-// mongodb+srv://dbCrowdPolls:U2wjnvlArHFt4EH9@clustera.rj8vf.mongodb.net/test'
+const NODE_ENV = require('../config/env/prod');
+
 mongoose.Promise = global.Promise;
-mongoose.connect('mongodb://localhost:27017/dbPolls', { useNewUrlParser: true }).then(() => {
+mongoose.connect(NODE_ENV.dbUrl, { useNewUrlParser: true }).then(() => {
     console.log("Connected to MongoDB successfully :)");
 }).catch((e) => {
     console.log("Error while attempting to connect to MongoDB");

@@ -1,5 +1,5 @@
-const sql_connection = {
-    url: "mongodb://localhost:27017/dbPolls"
-}; 
+const NODE_ENV = {
+    dbUrl: "mongodb+srv://dbAccessUsers:ElIw8DglxvHU426f@clustera.rj8vf.mongodb.net/users?retryWrites=true&w=majority"
+};
 
-module.exports = sql_connection;
+module.exports = NODE_ENV;

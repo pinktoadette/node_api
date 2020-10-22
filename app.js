@@ -8,6 +8,7 @@ const start = () => {
   server.listen(process.env.PORT || 8080, () =>{
     console.log(`Express server starting`   )
   });
+  console.log(process.env.NODE_ENV)
 
   server.timeout = 240000;
 
