@@ -8,7 +8,7 @@ const PollSchema = new mongoose.Schema({
         trim: true
     },
     real: {
-        type: String,
+        type: String || null,
         required: true
     },
     submittedDate: {

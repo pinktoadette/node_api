@@ -16,10 +16,8 @@ function updateProfile(req, res) {
     })
 }
 
-function viewProfile(req, res) {
+function viewProfilePost(req, res) {
     const handle = req.query
-    //> db.demo350.find({"details.ClientDetails.Name":"John"});
-
     User.aggregate([
         { $match : handle },
         {
@@ -30,40 +28,21 @@ function viewProfile(req, res) {
                 as: "articles"
             }
         },
-        { $group: 
-            {"_id": "$_id", 
-            "article": {$addToSet: "$articles"}, 
-            "handle" : { $first: '$handle' },
-        }},
+        {$unwind: "$articles"},
+        {
+            $group: {
+                "_id": "$_id",
+                "article" : {$addToSet: "$articles"}
+            }
+        },
     ])
     .limit(10)
     .sort({submittedDate: -1 })
     .then(results=> {
-        const r = results[0]['article'][0].reduce((acc, result) => {
-            //@todo need safe url
-            const n =urlMetadata(result['url']).then((metadata)=>{
-                metadata = _.pick(metadata,pickMe)
-                return Promise.resolve({...metadata});
-                },error => {
-                    res.status(403).json({ success: false, message: error });
-            })
-            acc.push(n)
-            return acc
-        }, [])
-        return r
-    }).then(response=> {
-        Promise.all([...response]).then(meta =>{
-            res.send({article: meta});
-        })
-        .catch((err) => {
-            console.log(err.message);
-        });
-    })
-    // User.findOne(handle).then((result)=> {
-    //     res.send(result)
-    // }).catch(error=>{
-    //     res.status(403).json({ success: false, message: error })
-    // })
+        res.send(results[0]);
+    }).catch((err) => {
+        res.status(402).json({ success: false, message: err })
+    });
 }
 
 function getUserProfile(req, res) {
@@ -82,7 +61,7 @@ function checkHandle(req, res) {
 
 module.exports = {
     updateProfile,
-    viewProfile,
+    viewProfilePost,
     getUserProfile,
     checkHandle
 }
