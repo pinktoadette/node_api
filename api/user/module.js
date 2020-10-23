@@ -18,6 +18,8 @@ function updateProfile(req, res) {
 
 function viewProfile(req, res) {
     const handle = req.query
+    //> db.demo350.find({"details.ClientDetails.Name":"John"});
+
     User.aggregate([
         { $match : handle },
         {
