@@ -47,9 +47,8 @@ function getPopularComment(req, res) {
         { $sort: { "total": -1 } },
         { $limit: 1 },
     ]).then(result=> {
-        // console.log(result)
-        res.status(200).send('blah');
-    })
+        res.status(200).send(result);
+    }).catch(err => res.status(403).json({ success: false, message: err }));
 }
 
 function getArticleTally(req, res) {
@@ -74,7 +73,8 @@ function getArticleTally(req, res) {
             { "$replaceRoot": {
                 "newRoot": { "$arrayToObject": "$counts" }
         }}
-    ]).then(result =>{
+    ])
+    .then(result =>{
         res.send(result[0])
     }).catch(error =>{
         res.status(403).json({ success: false, message: error })
@@ -83,7 +83,6 @@ function getArticleTally(req, res) {
 
 function submitVote(req, res) {
     const info = req.body;
-    console.log(info)
     Poll.findOneAndUpdate(
         {articleId: ObjectID(info['articleId']), _submitUserId: ObjectID(req.user_id)},
         { $set: {
