@@ -59,9 +59,16 @@ function checkHandle(req, res) {
     })
 }
 
+function getMentionList(req, res) {
+    User.find({handle: { $regex : "^"+req.query.handle, $options : "i" } }).limit(10).then(result =>{
+        res.send(result)
+    })
+}
+
 module.exports = {
     updateProfile,
     viewProfilePost,
     getUserProfile,
-    checkHandle
+    checkHandle,
+    getMentionList
 }
