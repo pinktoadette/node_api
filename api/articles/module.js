@@ -20,7 +20,21 @@ function submitNewArticle(req, res) {
             }
         },
         { upsert: true }
-    ).then((result) => {
+    ).then(async (result) => {
+        if (result['ok']) {
+            await Poll.updateOne(
+                {articleId: ObjectID(result['upserted'][0]['_id']), _submitUserId: ObjectID(req.user_id)},
+                {
+                    $set: {
+                        real: bodyTag['real'],
+                        submittedDate: new Date(),
+                        _submitUserId: req.user_id,
+                        articleId: result['upserted'][0]['_id']
+                    }
+                },
+                { upsert: true}
+            ).exec()
+        }
         res.send(result);
     }).catch(err => res.status(403).json({ success: false, message: err }));
 }
