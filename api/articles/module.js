@@ -22,20 +22,35 @@ function submitNewArticle(req, res) {
         { upsert: true }
     ).then(async (result) => {
         if (result['ok']) {
+            // broken for neutral
             await Poll.updateOne(
                 {articleId: ObjectID(result['upserted'][0]['_id']), _submitUserId: ObjectID(req.user_id)},
                 {
                     $set: {
                         real: bodyTag['real'],
                         submittedDate: new Date(),
-                        _submitUserId: req.user_id,
-                        articleId: result['upserted'][0]['_id']
+                        _submitUserId: ObjectID(req.user_id),
+                        articleId: ObjectID(result['upserted'][0]['_id'])
                     }
                 },
                 { upsert: true}
             ).exec()
+
+            await Comments.updateOne(
+                {articleId: ObjectID(result['upserted'][0]['_id']), _userId: ObjectID(req.user_id)},
+                {
+                    $set: {
+                        reply: bodyTag['comment'],
+                        submittedDate: new Date(),
+                        _userId: ObjectID(req.user_id),
+                        articleId: ObjectID(result['upserted'][0]['_id'])
+                    }
+                },
+                { upsert: true}
+            ).exec()
+            res.send(result);
         }
-        res.send(result);
+        res.send({});
     }).catch(err => res.status(403).json({ success: false, message: err }));
 }
 
@@ -55,14 +70,42 @@ function getArticleId(req, res) {
     })
 }
 
-function getPopularComment(req, res) {
-    LikeVotes.aggregate([
+async function getTopComment(req, res) {
+    const likes = await LikeVotes.aggregate([
         { $group: {_id: req.query['articleId'], total: {$sum: 1} }},
         { $sort: { "total": -1 } },
         { $limit: 1 },
-    ]).then(result=> {
-        res.status(200).send(result);
-    }).catch(err => res.status(403).json({ success: false, message: err }));
+    ]).exec();
+
+    if (likes.length > 0) {
+        res.send({...likes, type: 'top'})
+    } else {
+        const com = await Comments.aggregate([
+            {$match: {"articleId": ObjectID(req.query['articleId'])  }},
+            { $sort: { submittedDate : -1 } },
+            { $limit: 1 },
+            {
+                $lookup: {
+                        from: "users",
+                        localField: "_id.id",
+                        foreignField: "_userId.id",
+                        as: "user"
+                },
+            },
+            {$unwind: "$user"},
+            {
+                $project: {
+                    "reply": 1,
+                    "submittedDate": 1,
+                    "user.handle": 1,
+                    "user.displayname": 1
+                }
+            }
+        ])
+        if (!!com[0]) {
+            res.send({...com[0], type:'latest'})
+        }
+    }
 }
 
 function getArticleTally(req, res) {
@@ -110,7 +153,6 @@ function submitVote(req, res) {
         .then(result =>{
             res.status(200).send(result)
     }).catch(error => {
-        console.log(error)
         res.status(403).json({ success: false, message: error })
     })
 }
@@ -137,7 +179,7 @@ module.exports = {
     submitNewArticle,
     latestArticle,
     getArticleId,
-    getTopComment: getPopularComment,
+    getTopComment,
     submitVote,
     getMyVoteId,
     getArticleTally
