@@ -35,6 +35,9 @@ function submitNewArticle(req, res) {
                 },
                 { upsert: true}
             ).exec()
+            .catch(err => {
+                console.log(err)
+            })
 
             await Comments.updateOne(
                 {articleId: ObjectID(result['upserted'][0]['_id']), _userId: ObjectID(req.user_id)},
@@ -48,10 +51,14 @@ function submitNewArticle(req, res) {
                 },
                 { upsert: true}
             ).exec()
+            .catch(err => {
+                console.log(err)
+            })
+
             res.send(result);
         }
         res.send({});
-    }).catch(err => res.status(403).json({ success: false, message: err }));
+    })//.catch(err => res.status(403).json({ success: false, message: err }));
 }
 
 function getArticleId(req, res) {
@@ -62,26 +69,32 @@ function getArticleId(req, res) {
     // 2. get youtube seo tags
     // 3. vimeo, pinterest, Periscope,
     // 4. blacklist: ['tiktok','twitter'    ]
-
-    Articles.findOne({_id: id['id']}).then(response => {
+    if (typeof(id['id']) !== 'undefined') {
+        Articles.findOne({_id: id['id'] }).then(response => {
         urlMetadata(response['url']).then((metadata) => {
             res.send(metadata)
         }).catch(err => res.status(403).json({ success: false, message: err }));
-    })
+    }).catch(err => res.status(403).json({ success: false, message: err }));
+    } else {
+        res.send({})
+    }
 }
 
 async function getTopComment(req, res) {
     const likes = await LikeVotes.aggregate([
-        { $group: {_id: req.query['articleId'], total: {$sum: 1} }},
+        { $match: { articledId: ObjectID(req.query['articleId'])}},
+        { $group: { _id: null, total: {$sum: 1} }},
         { $sort: { "total": -1 } },
         { $limit: 1 },
-    ]).exec();
+    ]).exec()
+    .catch(err => console.log(err))
 
     if (likes.length > 0) {
         res.send({...likes, type: 'top'})
+        return
     } else {
         const com = await Comments.aggregate([
-            {$match: {"articleId": ObjectID(req.query['articleId'])  }},
+            {$match: { articleId: ObjectID(req.query['articleId'])  }},
             { $sort: { submittedDate : -1 } },
             { $limit: 1 },
             {
@@ -101,9 +114,14 @@ async function getTopComment(req, res) {
                     "user.displayname": 1
                 }
             }
-        ])
+        ]).exec()
+        .catch(err => {
+            console.log(err)
+        })
         if (!!com[0]) {
             res.send({...com[0], type:'latest'})
+        } else {
+            res.send({success: true, message: [] })
         }
     }
 }
@@ -111,7 +129,7 @@ async function getTopComment(req, res) {
 function getArticleTally(req, res) {
     const articleId = req.query['articleId']
     Poll.aggregate([
-        {$match: {"articleId":{$eq : ObjectID(articleId)}}},
+        {$match: {"articleId": ObjectID(articleId) }},
         {
             $group: { 
                 _id: "$real", 
@@ -161,7 +179,8 @@ async function getMyVoteId(req, res) {
     const info = req.query['articleId'];
     const result = await Poll.findOne(
         {articleId: ObjectID(info), _submitUserId: ObjectID(req.user_id)}
-    ).exec();
+    ).exec()
+    .catch(err => {console.log(err)});
     res.status(200).send(result);
 }
 
