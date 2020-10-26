@@ -5,8 +5,44 @@ const { ObjectID } = require('mongodb');
 const urlMetadata = require('url-metadata')
 const _ = require('lodash');
 const commentsModel = require('../../db/models/comments.model');
-const { pickMe } = require('../../config/constants');
+const { pickMe, forbiddenHash } = require('../../config/constants');
 const { Poll } = require('../../db/models/poll.model');
+const { Hashtags } = require('../../db/models/hashtags.model');
+const { forEach } = require('lodash');
+
+
+async function formatComment(comment) {
+    let newComment = '';
+    const arrComment = comment.split(" ");
+    console.log(arrComment)
+    for (var i=0; i < arrComment.length; i++) {
+        const word = arrComment[i];
+        if (word.match(/#[^\s]*/gmi)) {
+            const tag = word.split("#")[1];
+
+            await Hashtags.updateOne(
+                {hashtag: tag},
+                {$set: {
+                    hashtag: tag
+                }},
+                {$upset: true}
+            ).exec()
+            .catch(err=> {console.log(err)})
+    
+            newComment += `<a href='/search=${tag}'>${word}</a>`;
+        }else if (word.match(/@[^\s]*/gmi)) {
+            const user = word.split('@')[1];
+            newComment +=  `<a href='/p/${user}'>${word}</a>`;
+        }else if (word.match(/\^[^\s]*/gmi)){
+            newComment += ''
+
+        } else {
+            newComment += `${word} `
+        }
+        
+    }  
+    return newComment
+}
 
 function submitNewArticle(req, res) {
     const bodyTag = req.body;
@@ -21,7 +57,8 @@ function submitNewArticle(req, res) {
         },
         { upsert: true }
     ).then(async (result) => {
-        if (result['ok']) {
+        console.log(result)
+        if (result['ok'] && result['upserted']) {
             // broken for neutral
             await Poll.updateOne(
                 {articleId: ObjectID(result['upserted'][0]['_id']), _submitUserId: ObjectID(req.user_id)},
@@ -39,26 +76,31 @@ function submitNewArticle(req, res) {
                 console.log(err)
             })
 
-            await Comments.updateOne(
-                {articleId: ObjectID(result['upserted'][0]['_id']), _userId: ObjectID(req.user_id)},
-                {
-                    $set: {
-                        reply: bodyTag['comment'],
-                        submittedDate: new Date(),
-                        _userId: ObjectID(req.user_id),
-                        articleId: ObjectID(result['upserted'][0]['_id'])
-                    }
-                },
-                { upsert: true}
-            ).exec()
-            .catch(err => {
-                console.log(err)
-            })
-
+            // reformat text, to remove url and add link to mentions
+            const comment = await formatComment(bodyTag['comment']);
+            if (comment !== '') {
+                await Comments.updateOne(
+                    {articleId: ObjectID(result['upserted'][0]['_id']), _userId: ObjectID(req.user_id)},
+                    {
+                        $set: {
+                            reply: comment,
+                            submittedDate: new Date(),
+                            _userId: ObjectID(req.user_id),
+                            articleId: ObjectID(result['upserted'][0]['_id'])
+                        }
+                    },
+                    { upsert: true}
+                ).exec()
+                .catch(err => {
+                    console.log(err)
+                })
+            }
             res.send(result);
+            return
         }
         res.send({});
-    })//.catch(err => res.status(403).json({ success: false, message: err }));
+        return 
+    }).catch(err => res.status(403).json({ success: false, message: err }));
 }
 
 function getArticleId(req, res) {
