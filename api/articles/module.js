@@ -74,7 +74,8 @@ function submitNewArticle(req, res) {
 
             // reformat text, to remove url and add link to mentions
             const comment = await formatComment(bodyTag['comment']);
-            if (comment !== '' || comment !== " __ ") {
+            
+            if (comment !== '' || comment !== "  __ ") {
                 await Comments.updateOne(
                     {articleId: ObjectID(result['upserted'][0]['_id']), _userId: ObjectID(req.user_id)},
                     {
