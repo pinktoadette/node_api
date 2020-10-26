@@ -223,8 +223,11 @@ async function getMyVoteId(req, res) {
 }
 
 function latestArticle(req, res) {
+    const page = req.query.page;
+    const limit = 10;
     Articles.find()
-    .limit(10)
+    .skip(Number(page*limit))
+    .limit(limit)
     .sort({submittedDate: -1})
     .then(results=> {
         res.send(results);
