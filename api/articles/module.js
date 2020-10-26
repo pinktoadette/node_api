@@ -3,18 +3,15 @@ const { Articles, Comments, LikeVotes } = require('../../db/models');
 const { ObjectID } = require('mongodb');
 
 const urlMetadata = require('url-metadata')
-const _ = require('lodash');
-const commentsModel = require('../../db/models/comments.model');
-const { pickMe, forbiddenHash } = require('../../config/constants');
 const { Poll } = require('../../db/models/poll.model');
 const { Hashtags } = require('../../db/models/hashtags.model');
-const { forEach } = require('lodash');
-
+const { v1: uuidv1 } = require('uuid');
+const moment = require('moment');
+const { modelMap } = require('../../config/constants');
 
 async function formatComment(comment) {
     let newComment = '';
     const arrComment = comment.split(" ");
-    console.log(arrComment)
     for (var i=0; i < arrComment.length; i++) {
         const word = arrComment[i];
         if (word.match(/#[^\s]*/gmi)) {
@@ -34,8 +31,7 @@ async function formatComment(comment) {
             const user = word.split('@')[1];
             newComment +=  `<a href='/p/${user}'>${word}</a>`;
         }else if (word.match(/\^[^\s]*/gmi)){
-            newComment += ''
-
+            newComment += '__'
         } else {
             newComment += `${word} `
         }
@@ -52,12 +48,12 @@ function submitNewArticle(req, res) {
             $set: {
                 ...bodyTag,
                 _submitUserId: req.user_id,
-                submittedDate: new Date()
+                submittedDate: new Date(),
+                searchId: moment().format('DD-MM-YY') + '-'+ uuidv1().slice(0,5)
             }
         },
         { upsert: true }
     ).then(async (result) => {
-        console.log(result)
         if (result['ok'] && result['upserted']) {
             // broken for neutral
             await Poll.updateOne(
@@ -232,8 +228,62 @@ function latestArticle(req, res) {
     .sort({submittedDate: -1})
     .then(results=> {
         res.send(results);
-    }).catch(err => res.status(403).json({ success: false, message: err }));
+    }).catch(err => {
+        res.status(403).json({ success: false, message: err })
+    });
+}
 
+function getSearch(req, res) {
+    const model = req.query.type;
+    const searchId = req.query.searchId;
+    const limit = req.query.limit || 1;
+
+    modelMap[model].find(
+        {searchId}
+    ).limit(limit)
+    .sort({submittedDate: -1})
+    .then(results => {
+        res.send(results)
+    })
+    .catch(err=> {
+        res.status(403).json({ success: false, massage:err })
+    })
+}
+
+async function allComments(req, res) {
+    const articleObj = await Articles.findOne({
+        searchId: req.query['searchId']
+    }).exec()
+    .catch(err=> {console.log(err)})
+    const page_ = req.query['page'] || 0;
+    const limit_ = 20;
+    
+    const likedComments = await Comments.aggregate([
+        {$match: { articleId: ObjectID(articleObj._id)  }},
+            { $sort: { submittedDate : -1 } },
+            { $skip: page_ * limit_}, 
+            {
+                $lookup: {
+                        from: "users",
+                        localField: "_id.id",
+                        foreignField: "_userId.id",
+                        as: "user"
+                },
+            },
+            {$unwind: "$user"},
+            {
+                $project: {
+                    "reply": 1,
+                    "submittedDate": 1,
+                    "user.handle": 1,
+                    "user.displayname": 1
+                }
+            }
+    ]).exec()
+    .catch(err=> {
+        res.status(403).json({ success: false, massage:err })
+    })
+    res.send(likedComments)
 }
 
 module.exports = {
@@ -243,5 +293,7 @@ module.exports = {
     getTopComment,
     submitVote,
     getMyVoteId,
-    getArticleTally
+    getArticleTally,
+    getSearch,
+    allComments
 }

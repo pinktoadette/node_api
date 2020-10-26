@@ -18,6 +18,10 @@ const ArticleSchema = new mongoose.Schema({
         type: Date,
         required: true
     },
+    searchId: {
+        type: String,
+        unique: true,
+    },
     _submitUserId: {
         type: mongoose.Types.ObjectId,
         required: true

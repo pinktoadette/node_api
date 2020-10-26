@@ -8,5 +8,10 @@ module.exports = app => {
     app.get('/articles/top_comment', articles.getTopComment);
     app.post('/articles/my_vote', authenticate, articles.submitVote);
     app.get('/articles/my_vote', authenticate, articles.getMyVoteId);
-    app.get('/articles/poll_count', articles.getArticleTally)
+    app.get('/articles/poll_count', articles.getArticleTally);
+    app.get('/articles/comments', articles.allComments)
+
+    // generic: applies to all search
+    // <type>?=<id>
+    app.get('/search', articles.getSearch)
 }

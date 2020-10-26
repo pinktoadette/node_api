@@ -1,3 +1,7 @@
+const { Hashtags } = require("../db/models");
+const { Articles } = require("../db/models/articles.model");
+const { Comments } = require("../db/models/comments.model");
+
 const twilioAccountSid = 'ACdbe95409d8cb0a0033ca22ba49347447';
 const twilioAuthToken = 'aa21b73dbe34d32946872860f10d31f0';
 
@@ -53,9 +57,17 @@ const forbiddenHash = [
 "ass",																																
 ]
 
+const modelMap = {
+  'article': Articles,
+  'hashtags': Hashtags , 
+  'comments': Comments,
+   'real' : Articles
+}
+
 module.exports = {
     twilioAccountSid,
     twilioAuthToken,
     pickMe,
-    forbiddenHash
+    forbiddenHash,
+    modelMap
   }
