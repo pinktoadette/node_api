@@ -26,12 +26,12 @@ async function formatComment(comment) {
             ).exec()
             .catch(err=> {console.log(err)})
     
-            newComment += `<a href='/search=${tag}'>${word}</a>`;
+            newComment += `<a class="hash" href='/search=${tag}'>${word}</a> `;
         }else if (word.match(/@[^\s]*/gmi)) {
             const user = word.split('@')[1];
-            newComment +=  `<a href='/p/${user}'>${word}</a>`;
+            newComment +=  `<a class="hash" href='/p/${user}'>${word}</a> `;
         }else if (word.match(/\^[^\s]*/gmi)){
-            newComment += '__'
+            newComment += ' __ '
         } else {
             newComment += `${word} `
         }
@@ -74,7 +74,7 @@ function submitNewArticle(req, res) {
 
             // reformat text, to remove url and add link to mentions
             const comment = await formatComment(bodyTag['comment']);
-            if (comment !== '') {
+            if (comment !== '' || comment !== " __ ") {
                 await Comments.updateOne(
                     {articleId: ObjectID(result['upserted'][0]['_id']), _userId: ObjectID(req.user_id)},
                     {
