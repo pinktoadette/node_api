@@ -2,11 +2,12 @@
 const { User } = require('../../db/models');
 const twilio = require('twilio');
 const { twilioAccountSid, twilioAuthToken} = require('./../../config/constants')
+const { v4: uuidv4 } = require('uuid');
 
 function registerUser(req, res) {
     // User sign up
     let body = req.body;
-    let newUser = new User(body);
+    let newUser = new User({...body, pKey: uuidv4() });
 
     newUser.save().then(() => {
         return newUser.createSession();
@@ -24,8 +25,22 @@ function registerUser(req, res) {
             .header('X-Access-Token', authTokens.accessToken)
             .send(newUser);
     }).catch((e) => {
-        res.status(400).send(e);
+        let message = e.message;
+        console.log(">>", message)
+        if (e.message.includes('duplicate key error collection')) {
+            message = "Email already registered."
+        }
+
+        res.status(400).send( {success: false, message});
     })
+}
+
+async function checkHandle(req, res) {
+    const found = await User.findOne(
+        {handle: req.query.handle}
+    ).exec()
+    .catch(err=> console.log(err))
+    res.send(found)
 }
 
 function loginUser(req, res) {
@@ -96,5 +111,6 @@ module.exports = {
     login: loginUser,
     logout: logoutUser,
     confirmPhone: registerPhone,
-    access: userAccessToken
+    access: userAccessToken,
+    checkHandle
 }

@@ -2,16 +2,20 @@
 const { User } = require('../../db/models');
 const { LikeVotes } = require('../../db/models/likeVotes.model');
 const { ObjectID } = require('mongodb');
+const _ = require('lodash');
+const bcrypt = require('bcryptjs');
 
 function updateProfile(req, res) {
-    User.findOneAndUpdate(
-        { _id: req.user_id },
-        { $set: req.body},
-        { new: true}
-    ).then((result)=> {
+    let u = _.pickBy(req.body, _.identity);
+
+    console.log(u)
+    User.findByIdAndUpdate(req.user_id,
+    {
+        $set : u,
+    }).then(result =>{
         res.send(result)
-    }).catch(error=>{
-        res.status(403).json({ success: false, message: error })
+    }).catch(err => {
+        res.status(402).json({ success: false, message: err })
     })
 }
 
@@ -27,20 +31,25 @@ function viewProfilePost(req, res) {
                 as: "articles"
             }
         },
-        {$unwind: "$articles"},
+        {   $unwind: {
+                path: "$articles",
+                preserveNullAndEmptyArrays: true
+            }
+        },
         {
             $group: {
                 "_id": "$_id",
-                "article" : {$addToSet: "$articles"}
+                "article" : {$addToSet: "$articles"},
+                "photoUrl": { $first: "$photoUrl" }
             }
-        },
+        }
     ])
     .limit(10)
     .sort({submittedDate: -1 })
     .then(results=> {
         res.send(results[0]);
     }).catch((err) => {
-        res.status(402).json({ success: false, message: err })
+        res.status(403).json({ success: false, message: err })
     });
 }
 

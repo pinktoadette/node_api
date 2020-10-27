@@ -74,7 +74,7 @@ function submitNewArticle(req, res) {
 
             // reformat text, to remove url and add link to mentions
             const comment = await formatComment(bodyTag['comment']);
-            
+
             if (comment !== '' || comment !== "  __ ") {
                 await Comments.updateOne(
                     {articleId: ObjectID(result['upserted'][0]['_id']), _userId: ObjectID(req.user_id)},
@@ -150,7 +150,8 @@ async function getTopComment(req, res) {
                     "reply": 1,
                     "submittedDate": 1,
                     "user.handle": 1,
-                    "user.displayname": 1
+                    "user.displayname": 1,
+                    "user.photoUrl": 1
                 }
             }
         ]).exec()

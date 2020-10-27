@@ -21,7 +21,7 @@
     "express-session": "^1.17.1",
     "glob": "^7.1.6",
     "jsonwebtoken": "^8.5.0",
-    "lodash": "^4.17.11",
+    "lodash": "^4.17.20",
     "moment": "^2.29.1",
     "mongoose": "^5.4.11",
     "twilio": "^3.50.0",

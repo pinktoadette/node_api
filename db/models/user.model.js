@@ -21,6 +21,10 @@ const UserSchema = new mongoose.Schema({
         required: true,
         minlength: 8
     },
+    pKey: {
+        type: String,
+        unique: true
+    },
     displayName: {
         type: String, 
         trim: true
@@ -30,6 +34,10 @@ const UserSchema = new mongoose.Schema({
         unique: true,
         minlength: 3,
         trim: true,
+    },
+    photoUrl: {
+        type: String,
+        trim: true
     },
     sessions: [{
         token: {
@@ -163,7 +171,28 @@ UserSchema.pre('save', function (next) {
                 if (err) {
                     console.log(err)
                 }
-                console.log(hash)
+                user.password = hash;
+                next();
+            })
+        })
+    } else {
+        next();
+    }
+});
+
+UserSchema.pre('findByIdAndUpdate', function (next) {
+    
+    let user = this;
+    let costFactor = 10;
+
+    if (user.isModified('password')) {
+        // if the password field has been edited/changed then run this code.
+        // Generate salt and hash password
+        bcrypt.genSalt(costFactor, (err, salt) => {
+            bcrypt.hash(user.password, salt, (err, hash) => {
+                if (err) {
+                    console.log(err)
+                }
                 user.password = hash;
                 next();
             })
