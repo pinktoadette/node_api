@@ -1,5 +1,5 @@
 
-const { Articles, Comments, LikeVotes } = require('../../db/models');
+const { Articles, Comments, LikeVote } = require('../../db/models');
 const { ObjectID } = require('mongodb');
 
 const urlMetadata = require('url-metadata')
@@ -120,7 +120,7 @@ function getArticleId(req, res) {
 }
 
 async function getTopComment(req, res) {
-    const likes = await LikeVotes.aggregate([
+    const likes = await Comments.aggregate([
         { $match: { articledId: ObjectID(req.query['articleId'])}},
         { $group: { _id: null, total: {$sum: 1} }},
         { $sort: { "total": -1 } },
@@ -144,20 +144,57 @@ async function getTopComment(req, res) {
                         as: "user"
                 },
             },
-            {$unwind: "$user"},
+            {
+                $unwind: {
+                    path: "$user",
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {   // does requested user like this user's comment
+                $lookup: {
+                    from: "likevotes",
+                    let: { "commentId": "$_id" },
+                    pipeline: [
+                        {"$match": {
+                            "$and": [
+                                {"$expr":{"$eq":["$$commentId","$commentId"]}},
+                                {"_submitUserId": ObjectID(req.query['uid']) }
+                            ]
+                        }},
+                      ],
+                    as: "likes"
+                }
+            },
             {
                 $project: {
+                    "_id": 1,
                     "reply": 1,
                     "submittedDate": 1,
+                    "user._id": 1,
                     "user.handle": 1,
                     "user.displayname": 1,
-                    "user.photoUrl": 1
+                    "user.photoUrl": 1,
+                    "likes": { "$arrayElemAt": [ "$likes", 0 ] } 
                 }
-            }
+            },
+            {
+                $group: {
+                    _id: "$_id",
+                    user: {
+                        $first: "$user",
+                    },
+                    reply: {$first: "$reply"},
+                    likes: {
+                        $first: "$likes.response"
+                    },
+                }
+            },
         ]).exec()
         .catch(err => {
-            console.log(err)
+            console.log("error", err)
         })
+
+        console.log(com)
         if (!!com[0]) {
             res.send({...com[0], type:'latest'})
         } else {

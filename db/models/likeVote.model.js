@@ -1,11 +1,14 @@
 const mongoose = require('mongoose');
 
-const LikeVotesSchema = new mongoose.Schema({
+const LikeVoteSchema = new mongoose.Schema({
     articleId: {
         type: mongoose.Types.ObjectId
     },
     commentId: {
         type: mongoose.Types.ObjectId,
+    },
+    response: {
+        type: String
     },
     submittedDate: {
         type: Date,
@@ -18,6 +21,6 @@ const LikeVotesSchema = new mongoose.Schema({
 
 })
 
-const LikeVotes = mongoose.model('LikeVotes', LikeVotesSchema);
+const LikeVote = mongoose.model('LikeVote', LikeVoteSchema);
 
-module.exports = { LikeVotes }
+module.exports = { LikeVote }
