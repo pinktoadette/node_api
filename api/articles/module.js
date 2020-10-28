@@ -130,8 +130,8 @@ async function getTopComment(req, res) {
         {
             $lookup: {
                 from: "users",
-                localField: "_id.id",
-                foreignField: "_userId.id",
+                localField: "_userId",
+                foreignField: "_id",
                 as: "user"
             },
         },
