@@ -1,9 +1,5 @@
 const { ObjectID } = require('mongodb');
-const { Comments } = require('../../db/models');
-const { Poll } = require('../../db/models/poll.model');
-
-const _ = require('lodash');
-const commentsModel = require('../../db/models/comments.model');
+const { Comments, User, Poll } = require('../../db/models');
 
 function postComment(req, res) {
     const bodyTag = req.body;
@@ -55,7 +51,7 @@ function postComment(req, res) {
     }
 }
 
-function getResponses(req, res) {
+function getResponses(res) {
     //
     Comments.find().limit(10).sort({submittedDate:-1}).then(results=> {
         res.send(results);
@@ -64,7 +60,89 @@ function getResponses(req, res) {
     });
 }
 
+async function getUserResponse(req, res) {
+    const page_ = req.query['page'] || 0;
+    const limit_ = 20;
+    const user = await User.findOne({handle: req.query['handle']}).exec()
+    const curUser = req.query['uid'] || null;
+
+    Comments.aggregate([
+        {$match: {_userId: user._id}},
+        {$sort: {submittedDate: -1}},
+        {$skip: page_*limit_},
+        {$limit: limit_},
+        {
+            $lookup: {
+                from: "users",
+                localField: "_userId",
+                foreignField: "_id",
+                as: "user"
+            },
+        },
+        {
+            $lookup: {
+                from: "likevotes",
+                let: { "commentId": "$_id" },
+                pipeline: [
+                    {
+                        "$match": {
+                            "$and": [
+                                { "$expr": { "$eq": ["$$commentId", "$commentId"] } },
+                                { "_submitUserId": curUser}
+                            ]
+                        }
+                    },
+                ],
+                as: "likes"
+            }
+        },
+        {   
+            $lookup: {
+                from: "likevotes",
+                let: { "commentId": "$_id" },
+                pipeline: [
+                    { "$match": { "$expr": { "$eq": ["$$commentId", "$commentId"] } }, },
+                ],
+                as: "countlikes"
+            }
+        },
+        {
+            $project: {
+                "_id": 1,
+                "reply": 1,
+                "submittedDate": 1,
+                "user._id": 1,
+                "user.handle": 1,
+                "user.displayname": 1,
+                "user.photoUrl": 1,
+                "likes": { "$arrayElemAt": ["$likes", 0] },
+                "countLikes": { "$size": "$countlikes" }
+            }
+        },
+        {
+            $group: {
+                _id: "$_id",
+                user: {$first: "$user"},
+                reply: { $first: "$reply" },
+                likes: {
+                    $first: "$likes.response"
+                },
+                countLikes: { $first: "$countLikes" }
+            }
+        },
+    ])
+    .then(results =>{
+        res.send({results, user})
+    })
+    .catch(err=>{
+        console.log(err)
+    })
+
+    
+}
+
 module.exports = {
     postComment,
-    getResponses
+    getResponses,
+    getUserResponse
 }

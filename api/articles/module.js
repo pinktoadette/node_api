@@ -158,7 +158,7 @@ async function getTopComment(req, res) {
                 as: "likes"
             }
         },
-        {   // does requested user like this user's comment
+        {   
             $lookup: {
                 from: "likevotes",
                 let: { "commentId": "$_id" },

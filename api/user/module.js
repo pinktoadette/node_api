@@ -1,13 +1,11 @@
 
-const { User } = require('../../db/models');
-const { LikeVote } = require('../../db/models/likeVote.model');
+const { User, Follower, Following, Comments, Articles, LikeVote } = require('../../db/models');
 const { ObjectID } = require('mongodb');
 const _ = require('lodash');
 
 function updateProfile(req, res) {
     let u = _.pickBy(req.body, _.identity);
 
-    console.log(u)
     User.findByIdAndUpdate(req.user_id,
         {
             $set: u,
@@ -115,6 +113,25 @@ function getLikeItem(req, res) {
     })
 }
 
+async function getHandleStats(req, res) {
+    const user = await User.findOne({handle: req.query['handle']})
+
+    const comments = await Comments.countDocuments({_userId: user._id}).exec()
+    const posts = await Articles.countDocuments({_submitUserId: user._id}).exec()
+
+    // follower: who is following user
+    const followers = await Follower.countDocuments({ followerUserId: user._id}).exec();
+    // following: who user is following
+    const following = await Following.countDocuments({ _userId: user._id}).exec()
+
+    res.send({
+        comments,
+        posts,
+        followers,
+        following
+    })
+}
+
 module.exports = {
     updateProfile,
     viewProfilePost,
@@ -122,5 +139,6 @@ module.exports = {
     checkHandle,
     getMentionList,
     likeItem,
-    getLikeItem
+    getLikeItem,
+    getHandleStats
 }

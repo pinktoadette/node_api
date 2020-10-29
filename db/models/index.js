@@ -6,6 +6,8 @@ const { Articles } = require('./articles.model');
 const { Poll } = require('./poll.model');
 const { Comments } = require('./comments.model');
 const { LikeVote } = require('./likeVote.model');
+const { Follower } = require('./followers.model');
+const { Following } = require('./following.model');
 
 module.exports = {
     List,
@@ -15,5 +17,7 @@ module.exports = {
     Articles,
     Poll,
     Comments,
-    LikeVote
+    LikeVote,
+    Following,
+    Follower
 }
