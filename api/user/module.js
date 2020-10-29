@@ -117,19 +117,99 @@ async function getHandleStats(req, res) {
     const user = await User.findOne({handle: req.query['handle']})
 
     const comments = await Comments.countDocuments({_userId: user._id}).exec()
-    const posts = await Articles.countDocuments({_submitUserId: user._id}).exec()
+    const posted = await Articles.countDocuments({_submitUserId: user._id}).exec()
 
     // follower: who is following user
     const followers = await Follower.countDocuments({ followerUserId: user._id}).exec();
     // following: who user is following
-    const following = await Following.countDocuments({ _userId: user._id}).exec()
-
+    const following = await Following.countDocuments({ _userId: user._id}).exec()    
     res.send({
         comments,
-        posts,
+        posted,
         followers,
         following
     })
+}
+
+async function followItem(req, res) {
+    const curUser = req.user_id;
+    const body = req.body
+
+    const model = await findModel(body['type'], body['lookup'] )
+    Following.updateOne(
+        {_userId: curUser, ...model},
+        {
+            $set: {
+                status: body['status'],
+                _userId: curUser,
+                ...model
+            },
+        },
+        { upsert: true}
+    ).then(result => {
+        res.send({...result, status: body['status']})
+    }).catch(err => {
+        console.log(err)
+    })
+}
+
+async function following(req, res){
+    const q = req.query
+    const fUser = await User.findOne({ handle: q['handle'] }).exec();
+
+    Following.aggregate([
+        {$match: {_userId: fUser._id}},
+        {
+            $lookup: {
+                from: "users",
+                localField: "followUserId",
+                foreignField: "_id",
+                as: "user"
+            },
+        },{
+            $project: {
+                "_id":1,
+                "user._id": 1,
+                "user.handle": 1,
+                "user.displayname": 1,
+                "user.photoUrl": 1,
+            }
+        },{
+            $group: {
+                _id: "$_id",
+                user: {$first: "$user"}
+            }
+        }
+    ]).then(result => {
+        res.send(result)
+    }).catch(err => {
+        console.log(err)
+    })
+}
+function followers(req, res) {
+
+}
+
+async function isFollowItem(req, res) {
+    const curUser = req.user_id;
+    const body = req.body
+
+    const model = await findModel(body['type'], body['lookup'] )
+    Following.findOne(
+        {_userId: curUser, ...model}
+    ).then(result => {
+        res.send(result['status'])
+    }).catch(err => {
+        console.log(err)
+    })
+
+}
+
+async function findModel(type, id) {
+    if (type === 'user') {
+        const fUser = await User.findOne({ handle: id }).exec();
+        return { followUserId: fUser._id}
+    }
 }
 
 module.exports = {
@@ -140,5 +220,9 @@ module.exports = {
     getMentionList,
     likeItem,
     getLikeItem,
-    getHandleStats
+    getHandleStats,
+    followItem,
+    isFollowItem,
+    following,
+    followers
 }

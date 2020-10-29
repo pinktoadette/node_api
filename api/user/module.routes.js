@@ -4,6 +4,11 @@ const user = require('./module');
 module.exports = app => {
     app.patch('/account/update', authenticate, user.updateProfile);
     app.post('/account/view', user.getUserProfile);
+    app.post('/account/follow', authenticate, user.followItem);
+    app.post('/account/is_following', authenticate, user.isFollowItem);
+    app.get('/account/following', user.following);
+    app.get('/account/followers', user.followers);
+
     app.get('/account/posted', user.viewProfilePost);
     app.get('/account/handle_checks', user.checkHandle);
 

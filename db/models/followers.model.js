@@ -5,6 +5,9 @@ const FollowersSchema = new mongoose.Schema({
         type: mongoose.Types.ObjectId,
         required: true
     },
+    status: {
+        type: Boolean
+    },
     _userId: {
         type: mongoose.Types.ObjectId,
         required: true

@@ -10,6 +10,9 @@ const FollowingSchema = new mongoose.Schema({
     followCommentId: {
         type: mongoose.Types.ObjectId
     },
+    status: {
+        type: Boolean
+    },
     _userId: {
         type: mongoose.Types.ObjectId,
         required: true
