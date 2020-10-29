@@ -4,43 +4,11 @@ const { ObjectID } = require('mongodb');
 
 const urlMetadata = require('url-metadata')
 const { Poll } = require('../../db/models/poll.model');
-const { Hashtags } = require('../../db/models/hashtags.model');
 const { v1: uuidv1 } = require('uuid');
 const moment = require('moment');
 const { modelMap } = require('../../config/constants');
+const { formatComment } = require('../helper')
 
-async function formatComment(comment) {
-    let newComment = '';
-    const arrComment = comment.split(" ");
-    for (var i = 0; i < arrComment.length; i++) {
-        const word = arrComment[i];
-        if (word.match(/#[^\s]*/gmi)) {
-            const tag = word.split("#")[1];
-
-            await Hashtags.updateOne(
-                { hashtag: tag },
-                {
-                    $set: {
-                        hashtag: tag
-                    }
-                },
-                { $upset: true }
-            ).exec()
-                .catch(err => { console.log(err) })
-
-            newComment += `<a class="hash" href='/search=${tag}'>${word}</a> `;
-        } else if (word.match(/@[^\s]*/gmi)) {
-            const user = word.split('@')[1];
-            newComment += `<a class="hash" href='/p/${user}'>${word}</a> `;
-        } else if (word.match(/\^[^\s]*/gmi)) {
-            newComment += ' __ '
-        } else {
-            newComment += `${word} `
-        }
-
-    }
-    return newComment
-}
 
 function submitNewArticle(req, res) {
     const bodyTag = req.body;
@@ -123,6 +91,8 @@ function getArticleId(req, res) {
 
 async function getTopComment(req, res) {
     // get most voted, or get latest.
+    
+    const lookupUser = req.query['uid'] !== 'null' ? ObjectID(req.query['uid']) : null;
     const com = await Comments.aggregate([
         { $match: { articleId: ObjectID(req.query['articleId']) } },
         { $sort: { submittedDate: -1 } },
@@ -148,17 +118,19 @@ async function getTopComment(req, res) {
                 pipeline: [
                     {
                         "$match": {
-                            "$and": [
-                                { "$expr": { "$eq": ["$$commentId", "$commentId"] } },
-                                { "_submitUserId": req.query['uid'] }
-                            ]
+                            "$expr" : {
+                                "$and": [
+                                    { "$eq": ["$commentId", "$$commentId"] } ,
+                                    { "$eq": ["$_submitUserId", lookupUser ] }
+                                ]
+                            }
                         }
                     },
                 ],
                 as: "likes"
             }
         },
-        {   
+        {   // does requested user like this user's comment
             $lookup: {
                 from: "likevotes",
                 let: { "commentId": "$_id" },

@@ -1,5 +1,6 @@
 const { ObjectID } = require('mongodb');
 const { Comments, User, Poll } = require('../../db/models');
+const { formatComment } = require('../helper')
 
 function postComment(req, res) {
     const bodyTag = req.body;
@@ -51,6 +52,35 @@ function postComment(req, res) {
     }
 }
 
+async function replyComment(req, res) {
+    const bodyTag = req.body;
+    const comment = await formatComment(bodyTag['comment']);
+
+    if (comment !== '' || comment !== "  __ ") {
+        Comments.updateOne(
+            { 
+                respondCommentId: ObjectID(bodyTag['commentId']), 
+                _userId: ObjectID(req.user_id),
+                reply: comment // prevent duplicate
+             },
+            {
+                $set: {
+                    reply: comment,
+                    submittedDate: new Date(),
+                    _userId: ObjectID(req.user_id),
+                    respondCommentId:  ObjectID(bodyTag['commentId'])
+                }
+            },
+            { upsert: true }
+        ).then(results =>{
+            res.send(results)
+        })
+        .catch(err => {
+            console.log(err)
+        })
+    }
+}
+
 function getResponses(res) {
     //
     Comments.find().limit(10).sort({submittedDate:-1}).then(results=> {
@@ -64,8 +94,8 @@ async function getUserResponse(req, res) {
     const page_ = req.query['page'] || 0;
     const limit_ = 20;
     const user = await User.findOne({handle: req.query['handle']}).exec()
-    const curUser = req.query['uid'] || null;
-
+    const curUser = req.user_id || null;
+    
     Comments.aggregate([
         {$match: {_userId: user._id}},
         {$sort: {submittedDate: -1}},
@@ -144,5 +174,6 @@ async function getUserResponse(req, res) {
 module.exports = {
     postComment,
     getResponses,
-    getUserResponse
+    getUserResponse,
+    replyComment
 }
