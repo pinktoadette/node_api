@@ -1,5 +1,5 @@
 const { ObjectID } = require('mongodb');
-const { Comments, User, Poll } = require('../../db/models');
+const { Comments, CommentsReply, User, Poll } = require('../../db/models');
 const { formatComment } = require('../helper')
 
 function postComment(req, res) {
@@ -57,9 +57,9 @@ async function replyComment(req, res) {
     const comment = await formatComment(bodyTag['comment']);
 
     if (comment !== '' || comment !== "  __ ") {
-        Comments.updateOne(
+        CommentsReply.updateOne(
             { 
-                respondCommentId: ObjectID(bodyTag['commentId']), 
+                commentId: ObjectID(bodyTag['commentId']), 
                 _userId: ObjectID(req.user_id),
                 reply: comment // prevent duplicate
              },
@@ -68,7 +68,7 @@ async function replyComment(req, res) {
                     reply: comment,
                     submittedDate: new Date(),
                     _userId: ObjectID(req.user_id),
-                    respondCommentId:  ObjectID(bodyTag['commentId'])
+                    commentId:  ObjectID(bodyTag['commentId'])
                 }
             },
             { upsert: true }

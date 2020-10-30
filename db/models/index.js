@@ -8,6 +8,7 @@ const { Comments } = require('./comments.model');
 const { LikeVote } = require('./likeVote.model');
 const { Follower } = require('./followers.model');
 const { Following } = require('./following.model');
+const { CommentsReply } = require('./commentsReply.model');
 
 module.exports = {
     List,
@@ -19,5 +20,6 @@ module.exports = {
     Comments,
     LikeVote,
     Following,
-    Follower
+    Follower,
+    CommentsReply
 }

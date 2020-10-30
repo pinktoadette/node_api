@@ -91,7 +91,7 @@ function getArticleId(req, res) {
 
 async function getTopComment(req, res) {
     // get most voted, or get latest.
-    
+
     const lookupUser = req.query['uid'] !== 'null' ? ObjectID(req.query['uid']) : null;
     const com = await Comments.aggregate([
         { $match: { articleId: ObjectID(req.query['articleId']) } },
@@ -118,10 +118,10 @@ async function getTopComment(req, res) {
                 pipeline: [
                     {
                         "$match": {
-                            "$expr" : {
+                            "$expr": {
                                 "$and": [
-                                    { "$eq": ["$commentId", "$$commentId"] } ,
-                                    { "$eq": ["$_submitUserId", lookupUser ] }
+                                    { "$eq": ["$commentId", "$$commentId"] },
+                                    { "$eq": ["$_submitUserId", lookupUser] }
                                 ]
                             }
                         }
@@ -170,18 +170,18 @@ async function getTopComment(req, res) {
         .catch(err => {
             console.log("error", err)
         })
-    
+
     if (!!com[0]) {
-        res.send({ ...com[0], type: 'top' })  
+        res.send({ ...com[0], type: 'top' })
     } else {
         Comments.findOne(
-            { articleId: ObjectID(req.query['articleId'])},
-        ).sort({submittedDate: -1})
-        .then(result=> {
-            res.send({...result, type: 'latest'})  
-        })
-        .catch(err => console.log(err))
-        
+            { articleId: ObjectID(req.query['articleId']) },
+        ).sort({ submittedDate: -1 })
+            .then(result => {
+                res.send({ ...result, type: 'latest' })
+            })
+            .catch(err => console.log(err))
+
     }
 }
 
@@ -294,18 +294,90 @@ async function allComments(req, res) {
         {
             $lookup: {
                 from: "users",
-                localField: "_id.id",
-                foreignField: "_userId.id",
+                localField: "_userId",
+                foreignField: "_id",
                 as: "user"
             },
         },
-        { $unwind: "$user" },
+        {
+            $unwind: {
+                path: "$user",
+                preserveNullAndEmptyArrays: true
+            }
+        },
         {
             $project: {
+                "_id": 1,
                 "reply": 1,
                 "submittedDate": 1,
                 "user.handle": 1,
-                "user.displayname": 1
+                "user.displayname": 1,
+                "user.photoUrl":1
+            }
+        },
+        {
+            $lookup: {
+                from: "commentsreplies",
+                localField: "_id",
+                foreignField: "commentId",
+                // let: { commentId: "_id"},
+                // pipeline: [],
+                as: "response"
+            }
+        },
+        {
+            $unwind: {
+                path: "$response",
+                preserveNullAndEmptyArrays: true
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                let: { userId: "$response._userId" },
+                pipeline: [
+                    {
+                        $match:
+                        {
+                            '$expr':
+                            {
+                                '$eq': ['$_id', '$$userId']
+                            }
+                        }
+                    },
+                    {
+                        '$project':{
+                            '_id': 1,
+                            'handle': 1,
+                            'displayname':1,
+                            'photoUrl': 1
+                        }
+                    }
+                ],
+                as: "response.user"
+            }
+        },
+        {
+            $unwind: {
+                path: "$response.user",
+                preserveNullAndEmptyArrays: true
+            }
+        },
+        {
+            $project: {
+                "_id": 1,
+                "response": 1,
+                "user": 1,
+                "reply": 1
+            }
+        },
+        {
+            $group: {
+                _id: "$_id",
+                reply: { $first: "$reply" },
+                user: { $first: "$user" },
+                response: { $push: "$response" },
+                submittedDate: { $first: "$submittedDate" }
             }
         }
     ]).exec()
