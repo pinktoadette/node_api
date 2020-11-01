@@ -56,29 +56,28 @@ async function replyComment(req, res) {
     const bodyTag = req.body;
     const comment = await formatComment(bodyTag['comment']);
 
-    if (comment !== '' || comment !== "  __ ") {
-        CommentsReply.updateOne(
-            { 
-                commentId: ObjectID(bodyTag['commentId']), 
-                _userId: ObjectID(req.user_id),
-                reply: comment // prevent duplicate
-             },
-            {
-                $set: {
-                    reply: comment,
-                    submittedDate: new Date(),
-                    _userId: ObjectID(req.user_id),
-                    commentId:  ObjectID(bodyTag['commentId'])
-                }
+    Comments.updateOne(
+        { 
+            replyCommentId: ObjectID(bodyTag['commentId']), 
+            _userId: ObjectID(req.user_id),
+            reply: comment // prevent duplicate
             },
-            { upsert: true }
-        ).then(results =>{
-            res.send(results)
-        })
-        .catch(err => {
-            console.log(err)
-        })
-    }
+        {
+            $set: {
+                reply: comment,
+                submittedDate: new Date(),
+                _userId: ObjectID(req.user_id),
+                replyCommentId:  ObjectID(bodyTag['commentId'])
+            }
+        },
+        { upsert: true }
+    ).then(results =>{
+        res.send(results)
+    })
+    .catch(err => {
+        console.log(err)
+    })
+    
 }
 
 function getResponses(res) {

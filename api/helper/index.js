@@ -24,7 +24,7 @@ async function formatComment(comment) {
             const user = word.split('@')[1];
             newComment += `<a class="hash" href='/p/${user}'>${word}</a> `;
         } else if (word.match(/\^[^\s]*/gmi)) {
-            newComment += ' __ '
+            newComment += ''
         } else {
             newComment += `${word} `
         }

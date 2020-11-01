@@ -17,9 +17,13 @@ const CommentsSchema = new mongoose.Schema({
         type: Date,
         required: true
     },
+    replyCommentId: {
+        type: mongoose.Types.ObjectId, 
+        ref: 'Comments'
+    },
     _userId: {
         type: mongoose.Types.ObjectId,
-        required: true
+        required: true,
     }
 })
 

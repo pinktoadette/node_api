@@ -45,7 +45,6 @@ function submitNewArticle(req, res) {
             // reformat text, to remove url and add link to mentions
             const comment = await formatComment(bodyTag['comment']);
 
-            if (comment !== '' || comment !== "  __ ") {
                 await Comments.updateOne(
                     { articleId: ObjectID(result['upserted'][0]['_id']), _userId: ObjectID(req.user_id) },
                     {
@@ -61,12 +60,10 @@ function submitNewArticle(req, res) {
                     .catch(err => {
                         console.log(err)
                     })
-            }
+            
             res.send(result);
             return
         }
-        res.send({});
-        return
     }).catch(err => res.status(403).json({ success: false, message: err }));
 }
 
@@ -82,7 +79,7 @@ function getArticleId(req, res) {
         Articles.findOne({ _id: id['id'] }).then(response => {
             urlMetadata(response['url']).then((metadata) => {
                 res.send(metadata)
-            }).catch(err => res.status(403).json({ success: false, message: err }));
+            }).catch(err => console.log(err))
         }).catch(err => res.status(403).json({ success: false, message: err }));
     } else {
         res.send({})
@@ -315,16 +312,24 @@ async function allComments(req, res) {
                 "user.photoUrl":1
             }
         },
-        {
-            $lookup: {
-                from: "commentsreplies",
-                localField: "_id",
-                foreignField: "commentId",
-                // let: { commentId: "_id"},
-                // pipeline: [],
-                as: "response"
-            }
+        { $graphLookup: {
+            from: "comments",
+            startWith: "$_id",
+            connectFromField: "_id",
+            connectToField: "replyCommentId",
+            as: "response",
+          }
         },
+        // {
+        //     $lookup: {
+        //         from: "commentsreplies",
+        //         localField: "_id",
+        //         foreignField: "commentId",
+        //         // let: { commentId: "_id"},
+        //         // pipeline: [],
+        //         as: "response"
+        //     }
+        // },
         {
             $unwind: {
                 path: "$response",
@@ -366,9 +371,13 @@ async function allComments(req, res) {
         {
             $project: {
                 "_id": 1,
-                "response": 1,
                 "user": 1,
-                "reply": 1
+                "reply": 1,
+                "submittedDate": 1,
+                "response.reply": 1,
+                "response.replyCommentId": 1,
+                "response.submittedDate": 1,
+                "response.user": 1,
             }
         },
         {
