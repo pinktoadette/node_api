@@ -55,29 +55,40 @@ function postComment(req, res) {
 async function replyComment(req, res) {
     const bodyTag = req.body;
     const comment = await formatComment(bodyTag['comment']);
+    const update = {
+        reply: comment,
+        submittedDate: new Date(),
+        _userId: ObjectID(req.user_id),
+        replyCommentId:  ObjectID(bodyTag['commentId'])
+    }
 
-    Comments.updateOne(
+    const user = await User.findOne({
+        _id: ObjectID(req.user_id),
+    },
+    {   
+        _id: 0, 
+        handle: 1,
+        displayname: 1,
+        photoUrl: 1
+    }).exec();
+
+    await Comments.updateOne(
         { 
             replyCommentId: ObjectID(bodyTag['commentId']), 
             _userId: ObjectID(req.user_id),
             reply: comment // prevent duplicate
             },
         {
-            $set: {
-                reply: comment,
-                submittedDate: new Date(),
-                _userId: ObjectID(req.user_id),
-                replyCommentId:  ObjectID(bodyTag['commentId'])
-            }
+            $set: {...update}
         },
         { upsert: true }
-    ).then(results =>{
-        res.send(results)
+    ).exec()
+    .then(response=>{
+        res.send({...response['_id'], ...update, user})
     })
     .catch(err => {
         console.log(err)
     })
-    
 }
 
 function getResponses(res) {
@@ -107,6 +118,12 @@ async function getUserResponse(req, res) {
                 foreignField: "_id",
                 as: "user"
             },
+        },
+        {
+            $unwind: {
+                path: "$user",
+                preserveNullAndEmptyArrays: true
+            }
         },
         {
             $lookup: {

@@ -317,19 +317,10 @@ async function allComments(req, res) {
             startWith: "$_id",
             connectFromField: "_id",
             connectToField: "replyCommentId",
+            // maxDepth: "depth",
             as: "response",
           }
         },
-        // {
-        //     $lookup: {
-        //         from: "commentsreplies",
-        //         localField: "_id",
-        //         foreignField: "commentId",
-        //         // let: { commentId: "_id"},
-        //         // pipeline: [],
-        //         as: "response"
-        //     }
-        // },
         {
             $unwind: {
                 path: "$response",
@@ -374,10 +365,7 @@ async function allComments(req, res) {
                 "user": 1,
                 "reply": 1,
                 "submittedDate": 1,
-                "response.reply": 1,
-                "response.replyCommentId": 1,
-                "response.submittedDate": 1,
-                "response.user": 1,
+                "response": 1
             }
         },
         {

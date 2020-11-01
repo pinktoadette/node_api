@@ -1,6 +1,17 @@
 const mongoose = require('mongoose');
 const { Articles } = require('./articles.model');
 
+let dependencySchema = mongoose.Schema({
+    dependencyComment: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: false
+    },
+    dependencyAuthor: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: false
+    }
+});
+
 // user's poll to the submitted article
 const CommentsSchema = new mongoose.Schema({
     articleId: {
@@ -21,6 +32,11 @@ const CommentsSchema = new mongoose.Schema({
         type: mongoose.Types.ObjectId, 
         ref: 'Comments'
     },
+    children: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: [dependencySchema]
+
+     }],
     _userId: {
         type: mongoose.Types.ObjectId,
         required: true,
