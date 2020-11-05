@@ -3,7 +3,9 @@ const user = require('./module');
 
 module.exports = app => {
     app.patch('/account/update', authenticate, user.updateProfile);
-    app.post('/account/view', user.getUserProfile);
+    app.post('/account/view', user.getUserProfileById); //by id
+
+    app.get('/account/user-info', authenticate, user.getUserInfo); // bytoken
     app.post('/account/follow', authenticate, user.followItem);
     app.post('/account/is_following', authenticate, user.isFollowItem);
     app.get('/account/following', user.following);

@@ -1,6 +1,7 @@
 
 const { User, Follower, Following, Comments, Articles, LikeVote } = require('../../db/models');
 const { ObjectID } = require('mongodb');
+const { findOneUserFromRequest } = require('../helper')
 const _ = require('lodash');
 
 function updateProfile(req, res) {
@@ -51,7 +52,7 @@ function viewProfilePost(req, res) {
         });
 }
 
-function getUserProfile(req, res) {
+function getUserProfileById(req, res) {
     User.findOne({ _id: req.body.id }).then((result) => {
         res.send(result)
     }).catch(error => {
@@ -182,12 +183,20 @@ async function following(req, res){
         }
     ]).then(result => {
         res.send(result)
-    }).catch(err => {
-        console.log(err)
+    }).catch(error => {
+        res.status(403).json({ success: false, message: error })
     })
 }
 function followers(req, res) {
+    
+}
 
+async function getUserInfo(req, res) {
+    User.findById(req.user_id).then(response=>{
+        res.send(response)
+    }).catch(error => {
+        res.status(403).json({ success: false, message: error })
+    })
 }
 
 async function isFollowItem(req, res) {
@@ -215,7 +224,8 @@ async function findModel(type, id) {
 module.exports = {
     updateProfile,
     viewProfilePost,
-    getUserProfile,
+    getUserProfileById,
+    getUserInfo,
     checkHandle,
     getMentionList,
     likeItem,

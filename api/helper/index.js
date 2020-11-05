@@ -1,4 +1,5 @@
 const { Hashtags } = require('../../db/models/hashtags.model');
+const { User } = require('../../db/models/user.model');
 
 async function formatComment(comment) {
     let newComment = '';
@@ -33,6 +34,7 @@ async function formatComment(comment) {
     return newComment
 }
 
+
 module.exports = {
-    formatComment
+    formatComment,
 }

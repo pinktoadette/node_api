@@ -247,16 +247,95 @@ async function getMyVoteId(req, res) {
 
 function latestArticle(req, res) {
     const page = req.query.page;
-    const limit = 10;
-    Articles.find()
-        .skip(Number(page * limit))
-        .limit(limit)
-        .sort({ submittedDate: -1 })
-        .then(results => {
-            res.send(results);
-        }).catch(err => {
-            res.status(403).json({ success: false, message: err })
-        });
+    const limit = Number(req.query.limit) || 10;
+
+    Articles.aggregate([
+        {
+            $lookup: {
+                from: "comments",
+                localField: "_id",
+                foreignField: "articleId",
+                as: "comments"
+            },
+        },{
+            $unwind: {
+                path: "$comments",
+                preserveNullAndEmptyArrays: true
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                let: { userId: "$comments._userId" },
+                pipeline: [
+                    {
+                        $match:
+                        {
+                            '$expr':
+                            {
+                                '$eq': ['$_id', '$$userId']
+                            }
+                        }
+                    },
+                    {
+                        '$project':{
+                            '_id': 1,
+                            'handle': 1,
+                            'displayname':1,
+                            'photoUrl': 1
+                        }
+                    }
+                ],
+                as: "comments.user"
+            },
+        },
+        {
+            $unwind: {
+                path: "$comments.user",
+                preserveNullAndEmptyArrays: true
+            }
+        },
+        {
+            $project: {
+                "_id": 1,
+                "url": 1,
+                "hashtags": 1,
+                "real": 1,
+                "submittedDate": 1,
+                "comments": 1,
+            }
+        },
+        {
+            $group: {
+                _id: "$_id",
+                url: { $first: "$url"},
+                hashtags: {$first: "$hashtags"},
+                real: {$first: "$real"},
+                comments: { $first: "$comments" },
+                submittedDate: { $first: "$submittedDate" }
+            }
+        }
+    ])
+    .skip(page*limit)
+    .limit(limit)
+    .sort({submittedDate: -1})
+    .then(results => {
+        console.log(results.length)
+        res.send(results)
+    })
+    .catch(err => {
+        res.status(403).json({ success: false, massage: err })
+    })
+    // Articles.find()
+    //     .skip(Number(page * limit))
+    //     .limit(limit)
+    //     .sort({ submittedDate: -1 })
+    //     .then(results => {
+    //         console.log(results.length)
+    //         res.send(results);
+    //     }).catch(err => {
+    //         res.status(403).json({ success: false, message: err })
+    //     });
 }
 
 function getSearch(req, res) {
