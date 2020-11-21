@@ -1,2 +1,2 @@
 # node_api
-Backend for an reactive native app
+Backend for a reactive native app
