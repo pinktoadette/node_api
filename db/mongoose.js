@@ -12,7 +12,6 @@ mongoose.connect(connect.dbUrl, { useNewUrlParser: true }).then(() => {
     console.log(e);
 });
 
-// To prevent deprectation warnings (from MongoDB native driver)
 mongoose.set('useCreateIndex', true);
 mongoose.set('useFindAndModify', false);
 
