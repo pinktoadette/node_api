@@ -320,7 +320,6 @@ function latestArticle(req, res) {
     .limit(limit)
     .sort({submittedDate: -1})
     .then(results => {
-        console.log(results.length)
         res.send(results)
     })
     .catch(err => {
